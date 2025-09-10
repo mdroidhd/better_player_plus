@@ -5,12 +5,8 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <application>
-        <!-- Servicio para la reproducción en segundo plano -->
-        <service
-            android:name="uz.shs.better_player_plus.BetterPlayerPlugin"
-            android:foregroundServiceType="mediaPlayback"
-            android:exported="true">
-        </service>
+    <!-- Nota: Este plugin no define un Service propio. Cualquier servicio en primer plano
+         para notificaciones/ reproducción debe declararse en la app hospedadora. -->
 
         <!-- Receptor para los botones de medios (Play, Pause, etc) -->
         <receiver android:name="androidx.media.session.MediaButtonReceiver"
