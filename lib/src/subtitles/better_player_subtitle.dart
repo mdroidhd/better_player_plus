@@ -3,18 +3,19 @@ import 'package:better_player_plus/src/core/better_player_utils.dart';
 class BetterPlayerSubtitle {
   factory BetterPlayerSubtitle(String value, bool isWebVTT) {
     try {
-      final scanner = value.split('\n');
-      if (scanner.length == 2) {
-        return _handle2LinesSubtitles(scanner);
+      if (!value.startsWith("NOTE") && !value.startsWith("LANGUAGE")) {
+        final scanner = value.split('\n');
+        if (scanner.length == 2) {
+          return _handle2LinesSubtitles(scanner);
+        }
+        if (scanner.length > 2) {
+          return _handle3LinesAndMoreSubtitles(scanner, isWebVTT);
+        }
       }
-      if (scanner.length > 2) {
-        return _handle3LinesAndMoreSubtitles(scanner, isWebVTT);
-      }
-      return BetterPlayerSubtitle._();
     } on Exception catch (_) {
       BetterPlayerUtils.log('Failed to parse subtitle line: $value');
-      return BetterPlayerSubtitle._();
     }
+    return BetterPlayerSubtitle._();
   }
 
   BetterPlayerSubtitle._({this.index, this.start, this.end, this.texts});
@@ -26,40 +27,46 @@ class BetterPlayerSubtitle {
 
   static BetterPlayerSubtitle _handle2LinesSubtitles(List<String> scanner) {
     try {
-      final timeSplit = scanner[0].split(timerSeparator);
-      final start = _stringToDuration(timeSplit[0]);
-      final end = _stringToDuration(timeSplit[1]);
-      final texts = scanner.sublist(1, scanner.length);
+      if (!scanner.any((p) => p.startsWith("NOTE") || p.startsWith("LANGUAGE"))) {
+        final timeSplit = scanner[0].split(timerSeparator);
+        if (timeSplit.length == 2) {
+          final start = _stringToDuration(timeSplit[0]);
+          final end = _stringToDuration(timeSplit[1]);
+          final texts = scanner.sublist(1, scanner.length);
 
-      return BetterPlayerSubtitle._(index: -1, start: start, end: end, texts: texts);
+          return BetterPlayerSubtitle._(index: -1, start: start, end: end, texts: texts);
+        }
+      }
     } on Exception catch (_) {
       BetterPlayerUtils.log('Failed to parse subtitle line: $scanner');
-      return BetterPlayerSubtitle._();
     }
+    return BetterPlayerSubtitle._();
   }
 
   static BetterPlayerSubtitle _handle3LinesAndMoreSubtitles(List<String> scanner, bool isWebVTT) {
     try {
-      int? index = -1;
-      List<String> timeSplit = [];
-      int firstLineOfText = 0;
-      if (scanner[0].contains(timerSeparator)) {
-        timeSplit = scanner[0].split(timerSeparator);
-        firstLineOfText = 1;
-      } else {
-        index = int.tryParse(scanner[0]);
-        timeSplit = scanner[1].split(timerSeparator);
-        firstLineOfText = 2;
-      }
+      if (!scanner.any((p) => p.startsWith("NOTE") || p.startsWith("LANGUAGE"))) {
+        int? index = -1;
+        List<String> timeSplit = [];
+        int firstLineOfText = 0;
+        if (scanner[0].contains(timerSeparator)) {
+          timeSplit = scanner[0].split(timerSeparator);
+          firstLineOfText = 1;
+        } else {
+          index = int.tryParse(scanner[0]);
+          timeSplit = scanner[1].split(timerSeparator);
+          firstLineOfText = 2;
+        }
 
-      final start = _stringToDuration(timeSplit[0]);
-      final end = _stringToDuration(timeSplit[1]);
-      final texts = scanner.sublist(firstLineOfText, scanner.length);
-      return BetterPlayerSubtitle._(index: index, start: start, end: end, texts: texts);
+        final start = _stringToDuration(timeSplit[0]);
+        final end = _stringToDuration(timeSplit[1]);
+        final texts = scanner.sublist(firstLineOfText, scanner.length);
+        return BetterPlayerSubtitle._(index: index, start: start, end: end, texts: texts);
+      }
     } on Exception catch (_) {
       BetterPlayerUtils.log('Failed to parse subtitle line: $scanner');
-      return BetterPlayerSubtitle._();
     }
+    return BetterPlayerSubtitle._();
   }
 
   static Duration _stringToDuration(String value) {

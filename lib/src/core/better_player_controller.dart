@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+
 import 'package:better_player_plus/better_player_plus.dart';
 import 'package:better_player_plus/src/configuration/better_player_controller_event.dart';
 import 'package:better_player_plus/src/core/better_player_utils.dart';
@@ -547,6 +548,13 @@ class BetterPlayerController {
   void exitFullScreen() {
     _isFullScreen = false;
     _postControllerEvent(BetterPlayerControllerEvent.hideFullscreen);
+  }
+
+  /// Coming back from FullScreen.
+  void backFromFullScreen() {
+    _isFullScreen = false;
+    _postControllerEvent(BetterPlayerControllerEvent.hideFullscreen);
+    _postEvent(BetterPlayerEvent(BetterPlayerEventType.hideFullscreen));
   }
 
   ///Enables/disables full screen mode based on current fullscreen state.

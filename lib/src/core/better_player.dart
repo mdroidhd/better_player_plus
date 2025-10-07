@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:better_player_plus/better_player_plus.dart';
 import 'package:better_player_plus/src/configuration/better_player_controller_event.dart';
 import 'package:better_player_plus/src/core/better_player_utils.dart';
@@ -205,7 +206,7 @@ class _BetterPlayerState extends State<BetterPlayer> with WidgetsBindingObserver
     if (context.mounted) {
       await Navigator.of(context, rootNavigator: true).push(route);
       _isFullScreen = false;
-      widget.controller.exitFullScreen();
+      widget.controller.backFromFullScreen();
     }
 
     // The wakelock plugins checks whether it needs to perform an action internally,
