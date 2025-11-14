@@ -26,7 +26,7 @@ class MethodChannelVideoPlayer extends VideoPlayerPlatform {
     if (bufferingConfiguration == null) {
       response = await _channel.invokeMapMethod<String, dynamic>('create');
     } else {
-      final responseLinkedHashMap = await _channel.invokeMethod<Map<String, dynamic>?>('create', <String, dynamic>{
+      final responseLinkedHashMap = await _channel.invokeMethod<Map<Object?, dynamic>?>('create', <String, dynamic>{
         'minBufferMs': bufferingConfiguration.minBufferMs,
         'maxBufferMs': bufferingConfiguration.maxBufferMs,
         'bufferForPlaybackMs': bufferingConfiguration.bufferForPlaybackMs,
