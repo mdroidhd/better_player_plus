@@ -1,3 +1,12 @@
+## 1.1.4
+
+* Added custom controls configuration feature for enhanced player customization
+* Fixed Android Kotlin build errors and compatibility issues
+* Fixed player reference usage when accessing DRM, timeline, and video format
+* Improved DrmSessionManagerProvider initialization with safe let expressions
+* Enhanced video format access with proper null safety guards
+* Minor code improvements and optimizations
+
 ## 1.1.3
 
 * Documentation improvements with enhanced README formatting and structure
