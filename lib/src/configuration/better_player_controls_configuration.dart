@@ -155,7 +155,7 @@ class BetterPlayerControlsConfiguration {
   final Duration controlsHideTime;
 
   ///Parameter used to build custom controls
-  final Widget Function(BetterPlayerController controller, Function(bool) onPlayerVisibilityChanged)?
+  final Widget Function(BetterPlayerController controller, void Function(bool) onPlayerVisibilityChanged)?
   customControlsBuilder;
 
   ///Parameter used to change theme of the player

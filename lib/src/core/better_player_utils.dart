@@ -2,7 +2,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-class BetterPlayerUtils {
+final class BetterPlayerUtils {
+  const BetterPlayerUtils._();
+
   static String formatBitrate(int bitrate) {
     if (bitrate < 1000) {
       return '$bitrate bit/s';

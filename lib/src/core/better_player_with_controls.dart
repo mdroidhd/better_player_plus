@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 
 class BetterPlayerWithControls extends StatefulWidget {
   const BetterPlayerWithControls({super.key, this.controller});
+
   final BetterPlayerController? controller;
 
   @override
@@ -28,7 +29,7 @@ class _BetterPlayerWithControlsState extends State<BetterPlayerWithControls> {
 
   bool _initialized = false;
 
-  StreamSubscription? _controllerEventSubscription;
+  StreamSubscription<BetterPlayerControllerEvent>? _controllerEventSubscription;
 
   @override
   void initState() {
@@ -197,7 +198,7 @@ class _BetterPlayerVideoFitWidgetState extends State<_BetterPlayerVideoFitWidget
 
   bool _started = false;
 
-  StreamSubscription? _controllerEventSubscription;
+  StreamSubscription<BetterPlayerControllerEvent>? _controllerEventSubscription;
 
   @override
   void initState() {
@@ -266,9 +267,7 @@ class _BetterPlayerVideoFitWidgetState extends State<_BetterPlayerVideoFitWidget
       }
       return Center(
         child: ClipRect(
-          child: SizedBox(
-            width: double.infinity,
-            height: double.infinity,
+          child: SizedBox.expand(
             child: FittedBox(
               fit: widget.boxFit,
               child: SizedBox(
