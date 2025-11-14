@@ -1,3 +1,11 @@
+## 1.1.3
+
+* Documentation improvements with enhanced README formatting and structure
+* Added LinkedIn contact information for Flutter-related inquiries
+* Code cleanup: Removed unnecessary TODO comments
+* Improved text readability and formatting throughout documentation
+* Minor version bump with maintenance updates
+
 ## 1.1.2
 
 * Fixed missing type annotation in method_channel_video_player.dart
