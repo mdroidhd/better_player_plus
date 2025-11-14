@@ -39,7 +39,7 @@ class _BetterPlayerMaterialControlsState extends BetterPlayerControlsState<Bette
   bool _wasLoading = false;
   VideoPlayerController? _controller;
   BetterPlayerController? _betterPlayerController;
-  StreamSubscription? _controlsVisibilityStreamSubscription;
+  StreamSubscription<dynamic>? _controlsVisibilityStreamSubscription;
 
   BetterPlayerControlsConfiguration get _controlsConfiguration => widget.controlsConfiguration;
 
@@ -565,12 +565,8 @@ class _BetterPlayerMaterialControlsState extends BetterPlayerControlsState<Bette
         onDragStart: () {
           _hideTimer?.cancel();
         },
-        onDragEnd: () {
-          _startHideTimer();
-        },
-        onTapDown: () {
-          cancelAndRestartTimer();
-        },
+        onDragEnd: _startHideTimer,
+        onTapDown: cancelAndRestartTimer,
         colors: BetterPlayerProgressColors(
           playedColor: _controlsConfiguration.progressBarPlayedColor,
           handleColor: _controlsConfiguration.progressBarHandleColor,

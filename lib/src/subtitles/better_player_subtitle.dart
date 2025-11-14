@@ -18,6 +18,7 @@ class BetterPlayerSubtitle {
   }
 
   BetterPlayerSubtitle._({this.index, this.start, this.end, this.texts});
+
   static const String timerSeparator = ' --> ';
   final int? index;
   final Duration? start;
@@ -78,13 +79,13 @@ class BetterPlayerSubtitle {
       if (component.length == 2) {
         component.insert(0, '00');
       } else if (component.length != 3) {
-        return const Duration();
+        return Duration.zero;
       }
 
       final secsAndMillisSplitChar = component[2].contains(',') ? ',' : '.';
       final secsAndMillsSplit = component[2].split(secsAndMillisSplitChar);
       if (secsAndMillsSplit.length != 2) {
-        return const Duration();
+        return Duration.zero;
       }
 
       final result = Duration(
@@ -96,7 +97,7 @@ class BetterPlayerSubtitle {
       return result;
     } on Exception catch (_) {
       BetterPlayerUtils.log('Failed to process value: $value');
-      return const Duration();
+      return Duration.zero;
     }
   }
 

@@ -1,3 +1,5 @@
+// ignore_for_file: discarded_futures
+
 import 'dart:async';
 import 'package:better_player_plus/better_player_plus.dart';
 import 'package:better_player_plus/src/configuration/better_player_controller_event.dart';
@@ -44,7 +46,7 @@ class _BetterPlayerState extends State<BetterPlayer> with WidgetsBindingObserver
   bool _initialized = false;
 
   ///Subscription for controller events
-  StreamSubscription? _controllerEventSubscription;
+  StreamSubscription<dynamic>? _controllerEventSubscription;
 
   @override
   void initState() {
@@ -199,7 +201,7 @@ class _BetterPlayerState extends State<BetterPlayer> with WidgetsBindingObserver
     }
 
     if (!_betterPlayerConfiguration.allowedScreenSleep) {
-      WakelockPlus.enable();
+      await WakelockPlus.enable();
     }
 
     if (context.mounted) {
@@ -210,7 +212,7 @@ class _BetterPlayerState extends State<BetterPlayer> with WidgetsBindingObserver
 
     // The wakelock plugins checks whether it needs to perform an action internally,
     // so we do not need to check Wakelock.isEnabled.
-    WakelockPlus.disable();
+    await WakelockPlus.disable();
 
     await SystemChrome.setEnabledSystemUIMode(
       SystemUiMode.manual,
