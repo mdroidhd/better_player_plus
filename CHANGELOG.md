@@ -1,3 +1,9 @@
+## 1.1.5
+
+* Fixed error in WebVTT file parser for subtitle handling
+* Fixed issue where 'hideFullscreen' event was not fired when exiting fullscreen mode
+* Improved subtitle parsing reliability and error handling
+
 ## 1.1.4
 
 * Added custom controls configuration feature for enhanced player customization
