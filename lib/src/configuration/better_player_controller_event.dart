@@ -12,9 +12,9 @@ enum BetterPlayerControllerEvent {
   ///New data source has been set.
   setupDataSource,
 
-  //Video has started.
+  ///Video has started.
   play,
 
   ///Video set fit.
-  setFit
+  setFit,
 }

@@ -1,7 +1,6 @@
 package uz.shs.better_player_plus
 
 import android.content.Context
-import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DefaultDataSource
@@ -10,7 +9,7 @@ import androidx.media3.datasource.cache.CacheDataSink
 import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.exoplayer.upstream.DefaultBandwidthMeter
 
-@OptIn(UnstableApi::class)
+@UnstableApi
 internal class CacheDataSourceFactory(
     private val context: Context,
     private val maxCacheSize: Long,

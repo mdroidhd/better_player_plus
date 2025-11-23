@@ -56,9 +56,11 @@ internal class QueuingEventSink : EventSink {
                 is EndOfStreamEvent -> {
                     delegate!!.endOfStream()
                 }
+
                 is ErrorEvent -> {
                     delegate!!.error(event.code, event.message, event.details)
                 }
+
                 else -> {
                     delegate!!.success(event)
                 }
