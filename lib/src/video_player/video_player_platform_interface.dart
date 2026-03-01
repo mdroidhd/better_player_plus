@@ -315,7 +315,9 @@ class DataSource {
       result = '$result:$rawFormalHint';
     }
 
-    return result!;
+    // Usar ?? '' en lugar de ! para evitar _TypeError cuando uri, package y asset
+    // son todos null (puede ocurrir durante transiciones entre fuentes de video)
+    return result ?? '';
   }
 
   @override
