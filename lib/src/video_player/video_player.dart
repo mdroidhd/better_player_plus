@@ -213,10 +213,17 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
 
   /// Attempts to open the given [dataSource] and load metadata about the video.
   Future<void> _create() async {
-    _textureId = await _videoPlayerPlatform.create(
-      bufferingConfiguration: bufferingConfiguration,
-    );
-    _creatingCompleter.complete(null);
+    try {
+      _textureId = await _videoPlayerPlatform.create(
+        bufferingConfiguration: bufferingConfiguration,
+      );
+      _creatingCompleter.complete(null);
+    } catch (error, stackTrace) {
+      if (!_creatingCompleter.isCompleted) {
+        _creatingCompleter.completeError(error, stackTrace);
+      }
+      return;
+    }
 
     if (_isDisposed) {
       return;
@@ -438,7 +445,15 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
     value = VideoPlayerValue.uninitialized();
     _cancelPositionTimer();
 
-    await _creatingCompleter.future;
+    try {
+      await _creatingCompleter.future;
+    } catch (_) {
+      await _eventSubscription?.cancel();
+      _eventSubscription = null;
+      await videoEventStreamController.close();
+      super.dispose();
+      return;
+    }
 
     await _eventSubscription?.cancel();
     _eventSubscription = null;

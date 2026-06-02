@@ -63,6 +63,25 @@ void main() {
     await controller.dispose();
   });
 
+  test('dispose completes when platform player creation fails', () async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (MethodCall methodCall) async {
+          if (methodCall.method == 'create') {
+            throw PlatformException(
+              code: 'create_failed',
+              message: 'Failed to create platform player',
+            );
+          }
+          return null;
+        });
+
+    final controller = VideoPlayerController();
+    await expectLater(
+      controller.dispose().timeout(const Duration(seconds: 1)),
+      completes,
+    );
+  });
+
   test('better player dispose does not send an extra pause command', () {
     final controller = BetterPlayerController(
       const BetterPlayerConfiguration(),
