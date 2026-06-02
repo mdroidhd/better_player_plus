@@ -190,7 +190,21 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
   StreamSubscription<dynamic>? _eventSubscription;
 
   bool get _created => _creatingCompleter.isCompleted;
+  bool get _hasPlatformPlayer =>
+      _created && !_isDisposed && _textureId != null;
   Duration? _seekPosition;
+
+  void _cancelPositionTimer([Timer? timer]) {
+    timer?.cancel();
+    if (timer == null || identical(_timer, timer)) {
+      _timer = null;
+    }
+  }
+
+  bool _isTeardownPlatformException(PlatformException exception) {
+    return exception.code == 'Unknown textureId' ||
+        exception.code == 'no_activity';
+  }
 
   /// This is just exposed for testing. It shouldn't be used by anyone depending
   /// on the plugin.
@@ -203,6 +217,10 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
       bufferingConfiguration: bufferingConfiguration,
     );
     _creatingCompleter.complete(null);
+
+    if (_isDisposed) {
+      return;
+    }
 
     unawaited(_applyLooping());
     unawaited(_applyVolume());
@@ -412,16 +430,26 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
 
   @override
   Future<void> dispose() async {
-    await _creatingCompleter.future;
-    if (!_isDisposed) {
-      _isDisposed = true;
-      value = VideoPlayerValue.uninitialized();
-      _timer?.cancel();
-      await _eventSubscription?.cancel();
-      await _videoPlayerPlatform.dispose(_textureId);
-      videoEventStreamController.close();
+    if (_isDisposed) {
+      return;
     }
+
     _isDisposed = true;
+    value = VideoPlayerValue.uninitialized();
+    _cancelPositionTimer();
+
+    await _creatingCompleter.future;
+
+    await _eventSubscription?.cancel();
+    _eventSubscription = null;
+
+    final textureId = _textureId;
+    _textureId = null;
+    if (textureId != null) {
+      await _videoPlayerPlatform.dispose(textureId);
+    }
+
+    await videoEventStreamController.close();
     super.dispose();
   }
 
@@ -456,26 +484,39 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
   }
 
   Future<void> _applyPlayPause() async {
-    if (!_created || _isDisposed) {
+    if (!_hasPlatformPlayer) {
       return;
     }
-    _timer?.cancel();
+    _cancelPositionTimer();
     if (value.isPlaying) {
       await _videoPlayerPlatform.play(_textureId);
+      if (!_hasPlatformPlayer || !value.isPlaying) {
+        return;
+      }
       _timer = Timer.periodic(
         const Duration(milliseconds: 300),
         (Timer timer) async {
-          if (_isDisposed) {
+          if (!_hasPlatformPlayer || !value.isPlaying) {
+            _cancelPositionTimer(timer);
             return;
           }
           final Duration? newPosition = await position;
+          if (newPosition == null) {
+            _cancelPositionTimer(timer);
+            return;
+          }
+          if (!_hasPlatformPlayer || !value.isPlaying) {
+            _cancelPositionTimer(timer);
+            return;
+          }
           final DateTime? newAbsolutePosition = await absolutePosition;
           // ignore: invariant_booleans
-          if (_isDisposed) {
+          if (!_hasPlatformPlayer || !value.isPlaying) {
+            _cancelPositionTimer(timer);
             return;
           }
           _updatePosition(newPosition, absolutePosition: newAbsolutePosition);
-          if (_seekPosition != null && newPosition != null) {
+          if (_seekPosition != null) {
             final difference =
                 newPosition.inMilliseconds - _seekPosition!.inMilliseconds;
             if (difference > 0) {
@@ -505,19 +546,35 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
 
   /// The position in the current video.
   Future<Duration?> get position async {
-    if (!value.initialized && _isDisposed) {
+    if (!_hasPlatformPlayer) {
       return null;
     }
-    return _videoPlayerPlatform.getPosition(_textureId);
+    try {
+      return await _videoPlayerPlatform.getPosition(_textureId);
+    } on PlatformException catch (exception) {
+      if (!_hasPlatformPlayer || _isTeardownPlatformException(exception)) {
+        _cancelPositionTimer();
+        return null;
+      }
+      rethrow;
+    }
   }
 
   /// The absolute position in the current video stream
   /// (i.e. EXT-X-PROGRAM-DATE-TIME in HLS).
   Future<DateTime?> get absolutePosition async {
-    if (!value.initialized && _isDisposed) {
+    if (!_hasPlatformPlayer) {
       return null;
     }
-    return _videoPlayerPlatform.getAbsolutePosition(_textureId);
+    try {
+      return await _videoPlayerPlatform.getAbsolutePosition(_textureId);
+    } on PlatformException catch (exception) {
+      if (!_hasPlatformPlayer || _isTeardownPlatformException(exception)) {
+        _cancelPositionTimer();
+        return null;
+      }
+      rethrow;
+    }
   }
 
   /// Sets the video's current timestamp to be at [moment]. The next

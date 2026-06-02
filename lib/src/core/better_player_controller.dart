@@ -1283,7 +1283,6 @@ class BetterPlayerController {
     }
     if (!_disposed) {
       if (videoPlayerController != null) {
-        pause();
         videoPlayerController!.removeListener(_onFullScreenStateChanged);
         videoPlayerController!.removeListener(_onVideoPlayerChanged);
         videoPlayerController!.dispose();
