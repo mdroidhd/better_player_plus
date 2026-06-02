@@ -37,21 +37,21 @@ void main() {
 
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (MethodCall methodCall) async {
-          switch (methodCall.method) {
-            case 'create':
-              return <String, dynamic>{'textureId': 1};
-            case 'play':
-              return null;
-            case 'position':
-              positionCalls += 1;
-              throw PlatformException(
-                code: 'Unknown textureId',
-                message: 'No video player associated with texture id 1',
-              );
-            default:
-              return null;
-          }
-        });
+      switch (methodCall.method) {
+        case 'create':
+          return <String, dynamic>{'textureId': 1};
+        case 'play':
+          return null;
+        case 'position':
+          positionCalls += 1;
+          throw PlatformException(
+            code: 'Unknown textureId',
+            message: 'No video player associated with texture id 1',
+          );
+        default:
+          return null;
+      }
+    });
 
     final controller = VideoPlayerController();
     await Future<void>.delayed(Duration.zero);
@@ -63,17 +63,50 @@ void main() {
     await controller.dispose();
   });
 
+  test('position polling ignores invalid absolute position values', () async {
+    var absolutePositionCalls = 0;
+
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (MethodCall methodCall) async {
+      switch (methodCall.method) {
+        case 'create':
+          return <String, dynamic>{'textureId': 1};
+        case 'play':
+          return null;
+        case 'position':
+          return 1000;
+        case 'absolutePosition':
+          absolutePositionCalls += 1;
+          return 9223372036854775416;
+        default:
+          return null;
+      }
+    });
+
+    final controller = VideoPlayerController();
+    await Future<void>.delayed(Duration.zero);
+
+    await controller.play();
+    await Future<void>.delayed(const Duration(milliseconds: 350));
+
+    expect(absolutePositionCalls, 1);
+    expect(controller.value.position, const Duration(seconds: 1));
+    expect(controller.value.absolutePosition, isNull);
+
+    await controller.dispose();
+  });
+
   test('dispose completes when platform player creation fails', () async {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (MethodCall methodCall) async {
-          if (methodCall.method == 'create') {
-            throw PlatformException(
-              code: 'create_failed',
-              message: 'Failed to create platform player',
-            );
-          }
-          return null;
-        });
+      if (methodCall.method == 'create') {
+        throw PlatformException(
+          code: 'create_failed',
+          message: 'Failed to create platform player',
+        );
+      }
+      return null;
+    });
 
     final controller = VideoPlayerController();
     await expectLater(

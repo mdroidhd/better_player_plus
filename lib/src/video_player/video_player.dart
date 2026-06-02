@@ -190,8 +190,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
   StreamSubscription<dynamic>? _eventSubscription;
 
   bool get _created => _creatingCompleter.isCompleted;
-  bool get _hasPlatformPlayer =>
-      _created && !_isDisposed && _textureId != null;
+  bool get _hasPlatformPlayer => _created && !_isDisposed && _textureId != null;
   Duration? _seekPosition;
 
   void _cancelPositionTimer([Timer? timer]) {
@@ -589,6 +588,8 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
         return null;
       }
       rethrow;
+    } on ArgumentError {
+      return null;
     }
   }
 

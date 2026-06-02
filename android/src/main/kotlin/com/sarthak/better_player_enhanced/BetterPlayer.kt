@@ -499,7 +499,16 @@ internal class BetterPlayer(
                     val windowStartTimeMs =
                         timeline.getWindow(0, Timeline.Window()).windowStartTimeMs
                     val pos = exoPlayer?.currentPosition ?: 0L
-                    return windowStartTimeMs + pos
+                    if (windowStartTimeMs == C.TIME_UNSET) return 0L
+
+                    val absolutePositionMs = windowStartTimeMs + pos
+                    if (absolutePositionMs <= 0L ||
+                        absolutePositionMs > 8640000000000000L
+                    ) {
+                        return 0L
+                    }
+
+                    return absolutePositionMs
                 }
             }
             return exoPlayer?.currentPosition ?: 0L
