@@ -341,13 +341,34 @@ bool _remoteCommandsInitialized = false;
             } else if (uriArg) {
                 [player setDataSourceURL:[NSURL URLWithString:uriArg] withKey:key withCertificateUrl:certificateUrl withLicenseUrl: licenseUrl withHeaders:headers withCache: useCache cacheKey:cacheKey cacheManager:_cacheManager overriddenDuration:overriddenDuration videoExtension: videoExtension];
                 AVPlayerItem *currentItem = player.player.currentItem;
-                    if (currentItem) {
-                        AVAsset *asset = currentItem.asset;
-                        AVMediaSelectionGroup *group = [asset mediaSelectionGroupForMediaCharacteristic:AVMediaCharacteristicLegible];
-                        if (group) {
-                            [currentItem selectMediaOption:nil inMediaSelectionGroup:group];
+                if (currentItem) {
+                    AVAsset *asset = currentItem.asset;
+                    NSString *key = @"availableMediaCharacteristicsWithMediaSelectionOptions";
+                    __weak BetterPlayer *weakPlayer = player;
+                    __weak AVPlayerItem *weakItem = currentItem;
+                    // Do not query media selection synchronously here. Remote HLS
+                    // assets can load subtitle metadata over the network and block
+                    // the platform thread long enough for iOS AppHang reports.
+                    [asset loadValuesAsynchronouslyForKeys:@[key] completionHandler:^{
+                        NSError *error = nil;
+                        if ([asset statusOfValueForKey:key error:&error] != AVKeyValueStatusLoaded) {
+                            return;
                         }
-                    }
+
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            BetterPlayer *strongPlayer = weakPlayer;
+                            AVPlayerItem *strongItem = weakItem;
+                            if (!strongPlayer || !strongItem || strongPlayer.disposed || strongPlayer.player.currentItem != strongItem) {
+                                return;
+                            }
+
+                            AVMediaSelectionGroup *group = [asset mediaSelectionGroupForMediaCharacteristic:AVMediaCharacteristicLegible];
+                            if (group) {
+                                [strongItem selectMediaOption:nil inMediaSelectionGroup:group];
+                            }
+                        });
+                    }];
+                }
             } else {
                 result(FlutterMethodNotImplemented);
             }
