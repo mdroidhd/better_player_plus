@@ -9,6 +9,11 @@
 #error Code Requires ARC.
 #endif
 
+@interface BetterPlayerPlugin ()
+- (BetterPlayer*)activeNotificationPlayer;
+- (void)removeRemoteCommandTargets;
+@end
+
 
 @implementation BetterPlayerPlugin
 NSMutableDictionary* _dataSourceDict;
@@ -18,6 +23,10 @@ CacheManager* _cacheManager;
 int texturesCount = -1;
 BetterPlayer* _notificationPlayer;
 bool _remoteCommandsInitialized = false;
+id _togglePlayPauseCommandTarget;
+id _playCommandTarget;
+id _pauseCommandTarget;
+id _changePlaybackPositionCommandTarget;
 
 
 #pragma mark - FlutterPlugin protocol
@@ -46,6 +55,8 @@ bool _remoteCommandsInitialized = false;
 }
 
 - (void)detachFromEngineForRegistrar:(NSObject<FlutterPluginRegistrar>*)registrar {
+    [self removeRemoteCommandTargets];
+    _notificationPlayer = nil;
     for (NSNumber* textureId in _players.allKeys) {
         BetterPlayer* player = _players[textureId];
         [player disposeSansEventChannel];
@@ -124,6 +135,7 @@ bool _remoteCommandsInitialized = false;
     if (_remoteCommandsInitialized){
         return;
     }
+    [self removeRemoteCommandTargets];
     MPRemoteCommandCenter *commandCenter = [MPRemoteCommandCenter sharedCommandCenter];
     [commandCenter.togglePlayPauseCommand setEnabled:YES];
     [commandCenter.playCommand setEnabled:YES];
@@ -134,46 +146,94 @@ bool _remoteCommandsInitialized = false;
         [commandCenter.changePlaybackPositionCommand setEnabled:YES];
     }
 
-    [commandCenter.togglePlayPauseCommand addTargetWithHandler: ^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
-        if (_notificationPlayer != [NSNull null]){
-            if (_notificationPlayer.isPlaying){
-                _notificationPlayer.eventSink(@{@"event" : @"play"});
-            } else {
-                _notificationPlayer.eventSink(@{@"event" : @"pause"});
-            }
+    __weak typeof(self) weakSelf = self;
+    _togglePlayPauseCommandTarget = [commandCenter.togglePlayPauseCommand addTargetWithHandler: ^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        BetterPlayer* notificationPlayer = [strongSelf activeNotificationPlayer];
+        if (!notificationPlayer) {
+            return MPRemoteCommandHandlerStatusCommandFailed;
+        }
+        if (notificationPlayer.isPlaying){
+            notificationPlayer.eventSink(@{@"event" : @"play"});
+        } else {
+            notificationPlayer.eventSink(@{@"event" : @"pause"});
         }
         return MPRemoteCommandHandlerStatusSuccess;
     }];
 
-    [commandCenter.playCommand addTargetWithHandler: ^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
-        if (_notificationPlayer != [NSNull null]){
-            _notificationPlayer.eventSink(@{@"event" : @"play"});
+    _playCommandTarget = [commandCenter.playCommand addTargetWithHandler: ^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        BetterPlayer* notificationPlayer = [strongSelf activeNotificationPlayer];
+        if (!notificationPlayer) {
+            return MPRemoteCommandHandlerStatusCommandFailed;
         }
+        notificationPlayer.eventSink(@{@"event" : @"play"});
         return MPRemoteCommandHandlerStatusSuccess;
     }];
 
-    [commandCenter.pauseCommand addTargetWithHandler: ^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
-        if (_notificationPlayer != [NSNull null]){
-            _notificationPlayer.eventSink(@{@"event" : @"pause"});
+    _pauseCommandTarget = [commandCenter.pauseCommand addTargetWithHandler: ^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        BetterPlayer* notificationPlayer = [strongSelf activeNotificationPlayer];
+        if (!notificationPlayer) {
+            return MPRemoteCommandHandlerStatusCommandFailed;
         }
+        notificationPlayer.eventSink(@{@"event" : @"pause"});
         return MPRemoteCommandHandlerStatusSuccess;
     }];
 
 
 
     if (@available(iOS 9.1, *)) {
-        [commandCenter.changePlaybackPositionCommand addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
-            if (_notificationPlayer != [NSNull null]){
-                MPChangePlaybackPositionCommandEvent * playbackEvent = (MPChangePlaybackRateCommandEvent * ) event;
-                CMTime time = CMTimeMake(playbackEvent.positionTime, 1);
-                int64_t millis = [BetterPlayerTimeUtils FLTCMTimeToMillis:(time)];
-                [_notificationPlayer seekTo: millis];
-                _notificationPlayer.eventSink(@{@"event" : @"seek", @"position": @(millis)});
+        _changePlaybackPositionCommandTarget = [commandCenter.changePlaybackPositionCommand addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent * _Nonnull event) {
+            __strong typeof(weakSelf) strongSelf = weakSelf;
+            BetterPlayer* notificationPlayer = [strongSelf activeNotificationPlayer];
+            if (!notificationPlayer) {
+                return MPRemoteCommandHandlerStatusCommandFailed;
             }
+            MPChangePlaybackPositionCommandEvent * playbackEvent = (MPChangePlaybackPositionCommandEvent *) event;
+            CMTime time = CMTimeMake(playbackEvent.positionTime, 1);
+            int64_t millis = [BetterPlayerTimeUtils FLTCMTimeToMillis:(time)];
+            [notificationPlayer seekTo: millis];
+            notificationPlayer.eventSink(@{@"event" : @"seek", @"position": @(millis)});
             return MPRemoteCommandHandlerStatusSuccess;
         }];
     }
     _remoteCommandsInitialized = true;
+}
+
+- (BetterPlayer*)activeNotificationPlayer {
+    if (!_notificationPlayer || (id)_notificationPlayer == [NSNull null]) {
+        return nil;
+    }
+    if (_notificationPlayer.disposed || !_notificationPlayer.eventSink) {
+        return nil;
+    }
+    return _notificationPlayer;
+}
+
+- (void)removeRemoteCommandTargets {
+    MPRemoteCommandCenter *commandCenter = [MPRemoteCommandCenter sharedCommandCenter];
+    if (_togglePlayPauseCommandTarget) {
+        [commandCenter.togglePlayPauseCommand removeTarget:_togglePlayPauseCommandTarget];
+        _togglePlayPauseCommandTarget = nil;
+    }
+    if (_playCommandTarget) {
+        [commandCenter.playCommand removeTarget:_playCommandTarget];
+        _playCommandTarget = nil;
+    }
+    if (_pauseCommandTarget) {
+        [commandCenter.pauseCommand removeTarget:_pauseCommandTarget];
+        _pauseCommandTarget = nil;
+    }
+    if (@available(iOS 9.1, *)) {
+        if (_changePlaybackPositionCommandTarget) {
+            [commandCenter.changePlaybackPositionCommand removeTarget:_changePlaybackPositionCommandTarget];
+            _changePlaybackPositionCommandTarget = nil;
+        }
+    } else {
+        _changePlaybackPositionCommandTarget = nil;
+    }
+    _remoteCommandsInitialized = false;
 }
 
 - (void) setupRemoteCommandNotification:(BetterPlayer*)player, NSString* title, NSString* author , NSString* imageUrl{
@@ -247,8 +307,8 @@ bool _remoteCommandsInitialized = false;
 
 - (void) disposeNotificationData: (BetterPlayer*)player{
     if (player == _notificationPlayer){
-        _notificationPlayer = NULL;
-        _remoteCommandsInitialized = false;
+        [self removeRemoteCommandTargets];
+        _notificationPlayer = nil;
     }
     NSString* key =  [self getTextureId:player];
     id _timeObserverId = _timeObserverIdDict[key];
@@ -282,6 +342,8 @@ bool _remoteCommandsInitialized = false;
 
     if ([@"init" isEqualToString:call.method]) {
         // Allow audio playback when the Ring/Silent switch is set to silent
+        [self removeRemoteCommandTargets];
+        _notificationPlayer = nil;
         for (NSNumber* textureId in _players) {
             [_players[textureId] dispose];
         }
