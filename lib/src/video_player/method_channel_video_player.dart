@@ -217,7 +217,10 @@ class MethodChannelVideoPlayer extends VideoPlayerPlatform {
         ) ??
         0;
 
-    if (milliseconds <= 0) return null;
+    const int maxDateTimeMilliseconds = 8640000000000000;
+    if (milliseconds <= 0 || milliseconds > maxDateTimeMilliseconds) {
+      return null;
+    }
 
     return DateTime.fromMillisecondsSinceEpoch(milliseconds);
   }
