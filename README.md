@@ -16,6 +16,8 @@
 
 **Better Player Enhanced** is a production-ready, feature-rich video player for Flutter applications. Built upon the foundation of the original [Better Player](https://pub.dev/packages/better_player) by [jhomlala](https://github.com/jhomlala), this enhanced version brings critical updates, modern architecture, and enterprise-grade features.
 
+The project is updated regularly, and the community around it continues to grow, so you can expect more improvements and releases over time.
+
 > 💡 **Why Choose Better Player Enhanced?**  
 > This is the actively maintained fork that keeps your app compatible with the latest Flutter versions and Android ecosystem changes, while preserving all the powerful features you love.
 
@@ -128,7 +130,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  better_player_enhanced: ^1.0.0
+  better_player_enhanced: ^1.0.4
 ```
 
 ### Basic Usage
@@ -304,6 +306,7 @@ No code changes required! All APIs remain compatible.
 ## ⚠️ Important Notes
 
 - **Active Development**: This package is actively maintained and updated
+- **Regular Releases**: The package is updated regularly as the community grows and new fixes land
 - **Breaking Changes**: Minor versions may include breaking changes - always check the changelog
 - **Platform Support**: Android 21+, iOS 11+
 - **Flutter Version**: Requires Flutter 3.0.0 or higher

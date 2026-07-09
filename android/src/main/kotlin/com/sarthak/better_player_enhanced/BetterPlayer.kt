@@ -431,18 +431,16 @@ internal class BetterPlayer(
 
     @Suppress("DEPRECATION")
     private fun setAudioAttributes(exoPlayer: ExoPlayer?, mixWithOthers: Boolean) {
-        val audioComponent = exoPlayer?.audioComponent ?: return
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            audioComponent.setAudioAttributes(
-                AudioAttributes.Builder().setContentType(C.AUDIO_CONTENT_TYPE_MOVIE).build(),
-                !mixWithOthers
-            )
-        } else {
-            audioComponent.setAudioAttributes(
-                AudioAttributes.Builder().setContentType(C.AUDIO_CONTENT_TYPE_MUSIC).build(),
-                !mixWithOthers
-            )
-        }
+        val contentType =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                C.AUDIO_CONTENT_TYPE_MOVIE
+            } else {
+                C.AUDIO_CONTENT_TYPE_MUSIC
+            }
+        exoPlayer?.setAudioAttributes(
+            AudioAttributes.Builder().setContentType(contentType).build(),
+            !mixWithOthers
+        )
     }
 
     fun play() {

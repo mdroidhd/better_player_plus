@@ -1,8 +1,12 @@
-## 1.0.3
+## 1.0.4
 
 - Removed `canPlayFastForward` and `canPlaySlowForward` checks on iOS `setSpeed`
   - These properties incorrectly return `NO` for many valid HLS streams, causing `unsupported_fast_forward` / `unsupported_slow_forward` errors even when playback speed works fine in Safari and other players
   - `AVPlayer` natively handles unsupported rates gracefully, so explicit checks are unnecessary
+- Fixed the iOS remote command lifecycle so playback controls are cleaned up reliably when the player is rebuilt or disposed.
+- Fixed subtitle lookup on iOS to avoid blocking calls that could delay playback setup.
+- Guarded invalid absolute video positions and failed player creation cleanup to make error handling more resilient.
+- Loosened the `xml` dependency constraint to keep package resolution compatible with newer releases.
 
 ## 1.0.2
 
