@@ -2,7 +2,7 @@ class Constants {
   static const String bugBuckBunnyVideoUrl =
       "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
   static const String forBiggerBlazesUrl =
-      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4";
+      "https://drive.usercontent.google.com/download?id=1ZnV-9g7HusqJHJNyITkda0mgEoQKKyB1";
   static const String fileTestVideoUrl = "testvideo.mp4";
   static const String fileTestVideoEncryptUrl = "testvideo_encrypt.mp4";
   static const String networkTestVideoEncryptUrl =
@@ -11,21 +11,23 @@ class Constants {
   static const String hlsTestStreamUrl =
       "https://mtoczko.github.io/hls-test-streams/test-group/playlist.m3u8";
   static const String hlsPlaylistUrl =
-      "https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8";
+      "http://content.jwplatform.com/manifests/vM7nH0Kl.m3u8";
   static const Map<String, String> exampleResolutionsUrls = {
-    "LOW":
-        "https://file-examples-com.github.io/uploads/2017/04/file_example_MP4_480_1_5MG.mp4",
-    "MEDIUM":
-        "https://file-examples-com.github.io/uploads/2017/04/file_example_MP4_640_3MG.mp4",
-    "LARGE":
-        "https://file-examples-com.github.io/uploads/2017/04/file_example_MP4_1280_10MG.mp4",
-    "EXTRA_LARGE":
-        "https://file-examples-com.github.io/uploads/2017/04/file_example_MP4_1920_18MG.mp4"
+    "LOW": "https://samplelib.com/mp4/sample-5s-360p.mp4",
+    "MEDIUM": "https://samplelib.com/mp4/sample-5s-720p.mp4",
+    "LARGE": "https://samplelib.com/mp4/sample-5s.mp4",
+    "EXTRA_LARGE": "https://samplelib.com/mp4/sample-10s-2160p.mp4"
   };
   static const String phantomVideoUrl =
       "http://sample.vodobox.com/skate_phantom_flex_4k/skate_phantom_flex_4k.m3u8";
+  static const String elephantDreamPosterUrl =
+      "https://upload.wikimedia.org/wikipedia/commons/e/e8/Elephants_Dream_s5_both.jpg";
+  static const String elephantDreamOgvUrl =
+      "https://archive.org/download/ElephantsDream/ed_hd.ogv";
+  static const String elephantDreamAviUrl =
+      "https://archive.org/download/ElephantsDream/ed_hd.avi";
   static const String elephantDreamVideoUrl =
-      "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4";
+      "https://archive.org/download/ElephantsDream/ed_1024_512kb.mp4";
   static const String forBiggerJoyridesVideoUrl =
       "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4";
   static const String verticalVideoUrl =

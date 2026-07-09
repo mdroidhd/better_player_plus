@@ -269,6 +269,8 @@ cd example
 flutter run
 ```
 
+Note: The example app depends on public sample media URLs defined in [example/lib/constants.dart] . Some of these third-party links may expire or stop working over time, so certain example features can fail even when the package itself is working correctly. Updated sample sources are welcome.
+
 ---
 
 ## 📄 License
@@ -308,6 +310,7 @@ No code changes required! All APIs remain compatible.
 - **Active Development**: This package is actively maintained and updated
 - **Regular Releases**: The package is updated regularly as the community grows and new fixes land
 - **Breaking Changes**: Minor versions may include breaking changes - always check the changelog
+- **Swift Package Manager**: iOS Swift Package Manager integration is supported. The current SwiftPM path plays media normally, but iOS cache/pre-cache features still rely on the legacy CocoaPods-only cache stack.
 - **Platform Support**: Android 21+, iOS 11+
 - **Flutter Version**: Requires Flutter 3.0.0 or higher
 

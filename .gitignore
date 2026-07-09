@@ -30,6 +30,8 @@
 .pub-cache/
 .pub/
 build/
+.build/
+.swiftpm/
 
 # Android related
 **/android/**/gradle-wrapper.jar

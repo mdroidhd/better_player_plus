@@ -1,3 +1,19 @@
+## 1.0.5
+
+- Added iOS Swift Package Manager support for the plugin while keeping CocoaPods support for downstream apps.
+- Migrated the example iOS app away from CocoaPods to Swift Package Manager only.
+- Fixed iOS Picture in Picture setup and teardown:
+  - return results correctly for native PiP method calls
+  - use Scene-aware window lookup on modern iOS
+  - stop PiP correctly during cleanup
+  - surface PiP startup failures instead of failing silently
+- Added the `audio` background mode to the example iOS app for PiP testing.
+- Fixed Android Media3 compatibility by replacing removed `audioComponent` usage with `ExoPlayer.setAudioAttributes`.
+- Switched Android HTTP playback to OkHttp-backed Media3 data sources and forced HTTP/1.1 for better compatibility with hosts that fail on HTTP/2 ranged media requests.
+- Improved Android playback error reporting to include structured Media3 error details.
+- Refreshed several expired example video URLs and documented that some third-party sample media links can expire over time.
+- Note: on iOS, the current SwiftPM path supports normal playback, but cache and pre-cache still rely on the legacy CocoaPods-only cache stack.
+
 ## 1.0.4
 
 - Removed `canPlayFastForward` and `canPlaySlowForward` checks on iOS `setSpeed`

@@ -2,11 +2,24 @@ package  com.sarthak.better_player_enhanced
 
 import android.net.Uri
 import androidx.media3.datasource.DataSource
-import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.datasource.okhttp.OkHttpDataSource
+import okhttp3.OkHttpClient
+import okhttp3.Protocol
 
 internal object DataSourceUtils {
     private const val USER_AGENT = "User-Agent"
     private const val USER_AGENT_PROPERTY = "http.agent"
+    private const val DEFAULT_USER_AGENT = "BetterPlayer"
+
+    private val okHttpClient: OkHttpClient by lazy {
+        OkHttpClient.Builder()
+            .followRedirects(true)
+            .followSslRedirects(true)
+            .retryOnConnectionFailure(true)
+            // Some media hosts reset HTTP/2 streams during ranged reads.
+            .protocols(listOf(Protocol.HTTP_1_1))
+            .build()
+    }
 
     @JvmStatic
     fun getUserAgent(headers: Map<String, String>?): String? {
@@ -25,21 +38,16 @@ internal object DataSourceUtils {
         userAgent: String?,
         headers: Map<String, String>?
     ): DataSource.Factory {
-        val dataSourceFactory: DataSource.Factory = DefaultHttpDataSource.Factory()
-            .setUserAgent(userAgent)
-            .setAllowCrossProtocolRedirects(true)
-            .setConnectTimeoutMs(DefaultHttpDataSource.DEFAULT_CONNECT_TIMEOUT_MILLIS)
-            .setReadTimeoutMs(DefaultHttpDataSource.DEFAULT_READ_TIMEOUT_MILLIS)
+        val factory = OkHttpDataSource.Factory(okHttpClient)
+            .setUserAgent(userAgent ?: DEFAULT_USER_AGENT)
         if (headers != null) {
             val notNullHeaders = mutableMapOf<String, String>()
             headers.forEach { entry ->
                 notNullHeaders[entry.key] = entry.value
             }
-            (dataSourceFactory as DefaultHttpDataSource.Factory).setDefaultRequestProperties(
-                notNullHeaders
-            )
+            factory.setDefaultRequestProperties(notNullHeaders)
         }
-        return dataSourceFactory
+        return factory
     }
 
     @JvmStatic
