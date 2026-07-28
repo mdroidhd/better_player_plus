@@ -400,6 +400,12 @@ id _changePlaybackPositionCommandTarget;
                     assetPath = [_registrar lookupKeyForAsset:assetArg];
                 }
                 [player setDataSourceAsset:assetPath withKey:key withCertificateUrl:certificateUrl withLicenseUrl: licenseUrl cacheKey:cacheKey cacheManager:_cacheManager overriddenDuration:overriddenDuration];
+            } else if (dataSource[@"sources"]) {
+                // Merged media source is not supported on iOS
+                result([FlutterError errorWithCode:@"merged_not_supported"
+                                           message:@"MergingMediaSource is only supported on Android"
+                                           details:nil]);
+                return;
             } else if (uriArg) {
                 [player setDataSourceURL:[NSURL URLWithString:uriArg] withKey:key withCertificateUrl:certificateUrl withLicenseUrl: licenseUrl withHeaders:headers withCache: useCache cacheKey:cacheKey cacheManager:_cacheManager overriddenDuration:overriddenDuration videoExtension: videoExtension];
                 AVPlayerItem *currentItem = player.player.currentItem;

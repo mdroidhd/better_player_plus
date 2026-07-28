@@ -76,6 +76,11 @@ class BetterPlayerDataSource {
   ///platform.
   final BetterPlayerBufferingConfiguration bufferingConfiguration;
 
+  ///List of data sources for merged media source (Android only).
+  ///Used when [type] is [BetterPlayerDataSourceType.merged].
+  ///Each source can be a network, file, etc.
+  final List<BetterPlayerDataSource>? mergedSources;
+
   BetterPlayerDataSource(
     this.type,
     this.url, {
@@ -90,21 +95,49 @@ class BetterPlayerDataSource {
     this.resolutions,
     this.cacheConfiguration,
     this.notificationConfiguration =
-        const BetterPlayerNotificationConfiguration(
-      showNotification: false,
-    ),
+        const BetterPlayerNotificationConfiguration(showNotification: false),
     this.overriddenDuration,
     this.videoFormat,
     this.videoExtension,
     this.drmConfiguration,
     this.placeholder,
     this.bufferingConfiguration = const BetterPlayerBufferingConfiguration(),
+    this.mergedSources,
   }) : assert(
-            (type == BetterPlayerDataSourceType.network ||
-                    type == BetterPlayerDataSourceType.file) ||
-                (type == BetterPlayerDataSourceType.memory &&
-                    bytes?.isNotEmpty == true),
-            "Url can't be null in network or file data source | bytes can't be null when using memory data source");
+         (type == BetterPlayerDataSourceType.network ||
+                 type == BetterPlayerDataSourceType.file) ||
+             (type == BetterPlayerDataSourceType.memory &&
+                 bytes?.isNotEmpty == true) ||
+             (type == BetterPlayerDataSourceType.merged &&
+                 mergedSources != null &&
+                 mergedSources.length >= 2),
+         "Url can't be null in network or file data source | bytes can't be null when using memory data source | mergedSources must have at least 2 elements for merged type",
+       );
+
+  ///Factory method to build merged data source which uses multiple data sources
+  ///as separate tracks (e.g. video from one URL, audio from another).
+  ///Android only (uses ExoPlayer's MergingMediaSource).
+  factory BetterPlayerDataSource.merged(
+    List<BetterPlayerDataSource> sources, {
+    List<BetterPlayerSubtitlesSource>? subtitles,
+    BetterPlayerNotificationConfiguration notificationConfiguration =
+        const BetterPlayerNotificationConfiguration(showNotification: false),
+    Duration? overriddenDuration,
+    Widget? placeholder,
+    BetterPlayerBufferingConfiguration bufferingConfiguration =
+        const BetterPlayerBufferingConfiguration(),
+  }) {
+    return BetterPlayerDataSource(
+      BetterPlayerDataSourceType.merged,
+      "",
+      mergedSources: sources,
+      subtitles: subtitles,
+      notificationConfiguration: notificationConfiguration,
+      overriddenDuration: overriddenDuration,
+      placeholder: placeholder,
+      bufferingConfiguration: bufferingConfiguration,
+    );
+  }
 
   ///Factory method to build network data source which uses url as data source
   ///Bytes parameter is not used in this data source.
@@ -227,6 +260,7 @@ class BetterPlayerDataSource {
     Widget? placeholder,
     BetterPlayerBufferingConfiguration? bufferingConfiguration =
         const BetterPlayerBufferingConfiguration(),
+    List<BetterPlayerDataSource>? mergedSources,
   }) {
     return BetterPlayerDataSource(
       type ?? this.type,
@@ -249,6 +283,7 @@ class BetterPlayerDataSource {
       placeholder: placeholder ?? this.placeholder,
       bufferingConfiguration:
           bufferingConfiguration ?? this.bufferingConfiguration,
+      mergedSources: mergedSources ?? this.mergedSources,
     );
   }
 }

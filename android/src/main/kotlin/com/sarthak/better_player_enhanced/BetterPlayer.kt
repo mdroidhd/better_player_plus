@@ -199,6 +199,102 @@ internal class BetterPlayer(
         result.success(null)
     }
 
+    fun setMergedDataSource(
+        context: Context,
+        key: String?,
+        sources: List<Map<String, Any?>>,
+        result: MethodChannel.Result,
+        headers: Map<String, String>?,
+        useCache: Boolean,
+        maxCacheSize: Long,
+        maxCacheFileSize: Long,
+        overriddenDuration: Long
+    ) {
+        this.key = key
+        isInitialized = false
+        // Reset DRM - each sub-source will have its own if needed
+        drmSessionManager = null
+
+        val mediaSources = mutableListOf<MediaSource>()
+
+        for (source in sources) {
+            val sourceUri = source["uri"] as? String ?: ""
+            val formatHint = source["formatHint"] as? String
+            val sourceHeaders = source["headers"] as? Map<String, String>
+            val sourceUseCache = source["useCache"] as? Boolean ?: useCache
+            val sourceMaxCacheSize = (source["maxCacheSize"] as? Number)?.toLong() ?: maxCacheSize
+            val sourceMaxCacheFileSize = (source["maxCacheFileSize"] as? Number)?.toLong() ?: maxCacheFileSize
+            val sourceCacheKey = source["cacheKey"] as? String
+            val sourceLicenseUrl = source["licenseUrl"] as? String
+            val sourceDrmHeaders = source["drmHeaders"] as? Map<String, String>
+            val sourceClearKey = source["clearKey"] as? String
+
+            val uri = Uri.parse(sourceUri)
+            var dataSourceFactory: DataSource.Factory?
+            val userAgent = getUserAgent(sourceHeaders ?: headers)
+
+            // Setup DRM per sub-source
+            if (sourceLicenseUrl != null && sourceLicenseUrl.isNotEmpty()) {
+                val httpMediaDrmCallback =
+                    HttpMediaDrmCallback(sourceLicenseUrl, DefaultHttpDataSource.Factory())
+                if (sourceDrmHeaders != null) {
+                    for ((drmKey, drmValue) in sourceDrmHeaders) {
+                        httpMediaDrmCallback.setKeyRequestProperty(drmKey, drmValue)
+                    }
+                }
+                val drmSchemeUuid = Util.getDrmUuid("widevine")
+                if (drmSchemeUuid != null) {
+                    drmSessionManager = DefaultDrmSessionManager.Builder()
+                        .setUuidAndExoMediaDrmProvider(drmSchemeUuid) { uuid: UUID? ->
+                            try {
+                                FrameworkMediaDrm.newInstance(uuid!!)
+                            } catch (e: UnsupportedDrmException) {
+                                DummyExoMediaDrm()
+                            }
+                        }
+                        .setMultiSession(false)
+                        .build(httpMediaDrmCallback)
+                }
+            } else if (sourceClearKey != null && sourceClearKey.isNotEmpty()) {
+                drmSessionManager = DefaultDrmSessionManager.Builder()
+                    .setUuidAndExoMediaDrmProvider(
+                        C.CLEARKEY_UUID,
+                        FrameworkMediaDrm.DEFAULT_PROVIDER
+                    ).build(LocalMediaDrmCallback(sourceClearKey.toByteArray()))
+            } else {
+                drmSessionManager = null
+            }
+
+            if (isHTTP(uri)) {
+                dataSourceFactory = getDataSourceFactory(userAgent, sourceHeaders ?: headers)
+                if (sourceUseCache && sourceMaxCacheSize > 0 && sourceMaxCacheFileSize > 0) {
+                    dataSourceFactory = CacheDataSourceFactory(
+                        context,
+                        sourceMaxCacheSize,
+                        sourceMaxCacheFileSize,
+                        dataSourceFactory
+                    )
+                }
+            } else {
+                dataSourceFactory = DefaultDataSource.Factory(context)
+            }
+
+            val mediaSource = buildMediaSource(uri, dataSourceFactory, formatHint, sourceCacheKey, context)
+            mediaSources.add(mediaSource)
+        }
+
+        val mergedMediaSource = MergingMediaSource(*mediaSources.toTypedArray())
+
+        if (overriddenDuration != 0L) {
+            val clippingMediaSource = ClippingMediaSource(mergedMediaSource, 0, overriddenDuration * 1000)
+            exoPlayer?.setMediaSource(clippingMediaSource)
+        } else {
+            exoPlayer?.setMediaSource(mergedMediaSource)
+        }
+        exoPlayer?.prepare()
+        result.success(null)
+    }
+
     @androidx.annotation.OptIn(UnstableApi::class)
     fun setupPlayerNotification(
         context: Context, title: String, author: String?,

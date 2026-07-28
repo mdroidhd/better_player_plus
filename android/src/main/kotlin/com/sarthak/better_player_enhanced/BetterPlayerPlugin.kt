@@ -260,6 +260,27 @@ class BetterPlayerPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
                 null,
                 null, null, null
             )
+        } else if (dataSource["sources"] != null) {
+            // Merged media source: multiple sub-sources for ExoPlayer MergingMediaSource
+            @Suppress("UNCHECKED_CAST")
+            val sources = dataSource["sources"] as List<Map<String, Any?>>
+            val useCache = getParameter(dataSource, USE_CACHE_PARAMETER, false)
+            val maxCacheSizeNumber: Number = getParameter(dataSource, MAX_CACHE_SIZE_PARAMETER, 0)
+            val maxCacheFileSizeNumber: Number =
+                getParameter(dataSource, MAX_CACHE_FILE_SIZE_PARAMETER, 0)
+            val maxCacheSize = maxCacheSizeNumber.toLong()
+            val maxCacheFileSize = maxCacheFileSizeNumber.toLong()
+            player.setMergedDataSource(
+                flutterState?.applicationContext!!,
+                key,
+                sources,
+                result,
+                headers,
+                useCache,
+                maxCacheSize,
+                maxCacheFileSize,
+                overriddenDuration.toLong()
+            )
         } else {
             val useCache = getParameter(dataSource, USE_CACHE_PARAMETER, false)
             val maxCacheSizeNumber: Number = getParameter(dataSource, MAX_CACHE_SIZE_PARAMETER, 0)

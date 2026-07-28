@@ -11,8 +11,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 final VideoPlayerPlatform _videoPlayerPlatform = VideoPlayerPlatform.instance
-// This will clear all open videos on the platform when a full restart is
-// performed.
+  // This will clear all open videos on the platform when a full restart is
+  // performed.
   ..init();
 
 /// The duration, current position, buffering state, error state and settings
@@ -41,7 +41,7 @@ class VideoPlayerValue {
   /// Returns an instance with a `null` [Duration] and the given
   /// [errorDescription].
   VideoPlayerValue.erroneous(String errorDescription)
-      : this(duration: null, errorDescription: errorDescription);
+    : this(duration: null, errorDescription: errorDescription);
 
   /// The total duration of the video.
   ///
@@ -238,10 +238,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
       videoEventStreamController.add(event);
       switch (event.eventType) {
         case VideoEventType.initialized:
-          value = value.copyWith(
-            duration: event.duration,
-            size: event.size,
-          );
+          value = value.copyWith(duration: event.duration, size: event.size);
           _initializingCompleter.complete(null);
           _applyPlayPause();
           break;
@@ -390,27 +387,61 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
   ///
   /// This will load the file from the file-URI given by:
   /// `'file://${file.path}'`.
-  Future<void> setFileDataSource(File file,
-      {bool? showNotification,
-      String? title,
-      String? author,
-      String? imageUrl,
-      String? notificationChannelName,
-      Duration? overriddenDuration,
-      String? activityName,
-      String? clearKey}) {
+  Future<void> setFileDataSource(
+    File file, {
+    bool? showNotification,
+    String? title,
+    String? author,
+    String? imageUrl,
+    String? notificationChannelName,
+    Duration? overriddenDuration,
+    String? activityName,
+    String? clearKey,
+  }) {
     return _setDataSource(
       DataSource(
-          sourceType: DataSourceType.file,
-          uri: 'file://${file.path}',
-          showNotification: showNotification,
-          title: title,
-          author: author,
-          imageUrl: imageUrl,
-          notificationChannelName: notificationChannelName,
-          overriddenDuration: overriddenDuration,
-          activityName: activityName,
-          clearKey: clearKey),
+        sourceType: DataSourceType.file,
+        uri: 'file://${file.path}',
+        showNotification: showNotification,
+        title: title,
+        author: author,
+        imageUrl: imageUrl,
+        notificationChannelName: notificationChannelName,
+        overriddenDuration: overriddenDuration,
+        activityName: activityName,
+        clearKey: clearKey,
+      ),
+    );
+  }
+
+  /// Set data source for playing merged media sources (Android only).
+  /// Uses ExoPlayer's MergingMediaSource to combine independent tracks
+  /// (e.g. video from one URL and audio from another URL).
+  ///
+  /// Each source in [sources] is a map with the same structure as a network
+  /// or file data source (uri, formatHint, headers, useCache, etc.).
+  Future<void> setMergedDataSource(
+    List<Map<String, dynamic>> sources, {
+    bool? showNotification,
+    String? title,
+    String? author,
+    String? imageUrl,
+    String? notificationChannelName,
+    Duration? overriddenDuration,
+    String? activityName,
+  }) {
+    return _setDataSource(
+      DataSource(
+        sourceType: DataSourceType.merged,
+        showNotification: showNotification,
+        title: title,
+        author: author,
+        imageUrl: imageUrl,
+        notificationChannelName: notificationChannelName,
+        overriddenDuration: overriddenDuration,
+        activityName: activityName,
+        mergedSources: sources,
+      ),
     );
   }
 
@@ -429,8 +460,10 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
 
     _initializingCompleter = Completer<void>();
 
-    await VideoPlayerPlatform.instance
-        .setDataSource(_textureId, dataSourceDescription);
+    await VideoPlayerPlatform.instance.setDataSource(
+      _textureId,
+      dataSourceDescription,
+    );
     return _initializingCompleter.future;
   }
 
@@ -507,38 +540,37 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
       if (!_hasPlatformPlayer || !value.isPlaying) {
         return;
       }
-      _timer = Timer.periodic(
-        const Duration(milliseconds: 300),
-        (Timer timer) async {
-          if (!_hasPlatformPlayer || !value.isPlaying) {
-            _cancelPositionTimer(timer);
-            return;
+      _timer = Timer.periodic(const Duration(milliseconds: 300), (
+        Timer timer,
+      ) async {
+        if (!_hasPlatformPlayer || !value.isPlaying) {
+          _cancelPositionTimer(timer);
+          return;
+        }
+        final Duration? newPosition = await position;
+        if (newPosition == null) {
+          _cancelPositionTimer(timer);
+          return;
+        }
+        if (!_hasPlatformPlayer || !value.isPlaying) {
+          _cancelPositionTimer(timer);
+          return;
+        }
+        final DateTime? newAbsolutePosition = await absolutePosition;
+        // ignore: invariant_booleans
+        if (!_hasPlatformPlayer || !value.isPlaying) {
+          _cancelPositionTimer(timer);
+          return;
+        }
+        _updatePosition(newPosition, absolutePosition: newAbsolutePosition);
+        if (_seekPosition != null) {
+          final difference =
+              newPosition.inMilliseconds - _seekPosition!.inMilliseconds;
+          if (difference > 0) {
+            _seekPosition = null;
           }
-          final Duration? newPosition = await position;
-          if (newPosition == null) {
-            _cancelPositionTimer(timer);
-            return;
-          }
-          if (!_hasPlatformPlayer || !value.isPlaying) {
-            _cancelPositionTimer(timer);
-            return;
-          }
-          final DateTime? newAbsolutePosition = await absolutePosition;
-          // ignore: invariant_booleans
-          if (!_hasPlatformPlayer || !value.isPlaying) {
-            _cancelPositionTimer(timer);
-            return;
-          }
-          _updatePosition(newPosition, absolutePosition: newAbsolutePosition);
-          if (_seekPosition != null) {
-            final difference =
-                newPosition.inMilliseconds - _seekPosition!.inMilliseconds;
-            if (difference > 0) {
-              _seekPosition = null;
-            }
-          }
-        },
-      );
+        }
+      });
     } else {
       await _videoPlayerPlatform.pause(_textureId);
     }
@@ -659,13 +691,26 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
   /// [bitrate] specifies bitrate of the selected track
   Future<void> setTrackParameters(int? width, int? height, int? bitrate) async {
     await _videoPlayerPlatform.setTrackParameters(
-        _textureId, width, height, bitrate);
+      _textureId,
+      width,
+      height,
+      bitrate,
+    );
   }
 
-  Future<void> enablePictureInPicture(
-      {double? top, double? left, double? width, double? height}) async {
+  Future<void> enablePictureInPicture({
+    double? top,
+    double? left,
+    double? width,
+    double? height,
+  }) async {
     await _videoPlayerPlatform.enablePictureInPicture(
-        textureId, top, left, width, height);
+      textureId,
+      top,
+      left,
+      width,
+      height,
+    );
   }
 
   Future<void> disablePictureInPicture() async {
@@ -811,10 +856,7 @@ class VideoProgressColors {
 }
 
 class _VideoScrubber extends StatefulWidget {
-  const _VideoScrubber({
-    required this.child,
-    required this.controller,
-  });
+  const _VideoScrubber({required this.child, required this.controller});
 
   final Widget child;
   final VideoPlayerController controller;
@@ -894,8 +936,8 @@ class VideoProgressIndicator extends StatefulWidget {
     this.allowScrubbing,
     this.padding = const EdgeInsets.only(top: 5.0),
     Key? key,
-  })  : colors = colors ?? VideoProgressColors(),
-        super(key: key);
+  }) : colors = colors ?? VideoProgressColors(),
+       super(key: key);
 
   /// The [VideoPlayerController] that actually associates a video with this
   /// widget.
@@ -1038,11 +1080,11 @@ class ClosedCaption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final TextStyle effectiveTextStyle = textStyle ??
-        DefaultTextStyle.of(context).style.copyWith(
-              fontSize: 36.0,
-              color: Colors.white,
-            );
+    final TextStyle effectiveTextStyle =
+        textStyle ??
+        DefaultTextStyle.of(
+          context,
+        ).style.copyWith(fontSize: 36.0, color: Colors.white);
 
     if (text == null) {
       return const SizedBox.shrink();
