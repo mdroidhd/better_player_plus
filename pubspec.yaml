@@ -1,6 +1,6 @@
 name: better_player_enhanced
 description: Advanced video player based on video_player and Chewie. Supports HLS, DASH, DRM, cache, subtitles, PiP, and much more. AndroidX Media3 powered.
-version: 1.0.4
+version: 1.0.5
 homepage: https://github.com/kingace2056/betterplayer
 documentation: https://jhomlala.github.io/betterplayer/
 
@@ -13,7 +13,7 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.9
   wakelock_plus: ^1.6.1
-  meta: ^1.18.0
+  meta: ^1.17.0
   flutter_widget_from_html_core: ^0.17.2
   visibility_detector: ^0.4.0+2
   path_provider: ^2.1.6

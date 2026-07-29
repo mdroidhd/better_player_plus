@@ -28,6 +28,7 @@ import android.util.Log
 import android.view.Surface
 import androidx.lifecycle.Observer
 import io.flutter.plugin.common.EventChannel.EventSink
+import androidx.work.ListenableWorker
 import androidx.media.session.MediaButtonReceiver
 import androidx.work.Data
 import androidx.work.OneTimeWorkRequest
@@ -853,7 +854,9 @@ internal class BetterPlayer(
                 )
             }
             if (dataSource != null && context != null) {
-                val cacheWorkRequest = OneTimeWorkRequest.Builder(CacheWorker::class.java)
+                @Suppress("UNCHECKED_CAST")
+                val workerClass = Class.forName("com.sarthak.better_player_enhanced.CacheWorker") as Class<out ListenableWorker>
+                val cacheWorkRequest = OneTimeWorkRequest.Builder(workerClass)
                     .addTag(dataSource)
                     .setInputData(dataBuilder.build()).build()
                 WorkManager.getInstance(context).enqueue(cacheWorkRequest)

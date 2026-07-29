@@ -340,7 +340,7 @@ class DataSource {
       result = "$result:$rawFormalHint";
     }
 
-    return result!;
+    return result ?? '';
   }
 
   @override
@@ -366,6 +366,9 @@ enum DataSourceType {
 
   /// The video was loaded off of the local filesystem.
   file,
+
+  /// The video is a merged media source (Android only).
+  merged,
 }
 
 /// The file format of the given video.
